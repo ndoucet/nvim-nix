@@ -124,7 +124,7 @@ ln -s "$PWD/nvim" ~/.config/nvim
 | `lua/plugins/lsp.lua` | Language servers, completion, `gd`/`gr`/… and `<Space>c…` LSP keys |
 | `lua/plugins/format.lua` | conform: formatter per file type, format on save |
 | `lua/plugins/lint.lua` | nvim-lint: linter per file type |
-| `lua/plugins/markdown.lua` | render-markdown (Markdown rendered in the buffer), markdown-preview (browser preview with Mermaid) |
+| `lua/plugins/markdown.lua` | render-markdown (Markdown rendered in the buffer), markdown-preview (browser preview with Mermaid, also of `.mmd` files) |
 
 Each plugin's keymaps live in its file. A new plugin gets a new file in `lua/plugins/`
 and a `require("plugins.<name>")` line in `init.lua`. A new leader group also needs an
