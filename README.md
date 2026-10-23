@@ -23,9 +23,15 @@ or prefix every command below with `nix --extra-experimental-features "nix-comma
 
 ### Install
 
-From the project directory:
+The repository is private, so it is fetched over SSH: the machine needs an SSH key added
+to the GitHub account (check with `ssh -T git@github.com`).
+
+Clone it, then install from the clone. A clone is needed to link the configuration files
+(see [Configuration](#configuration)) and to add plugins or packages:
 
 ```sh
+git clone git@github.com:ndoucet/nvim-nix.git ~/perso/nvim-nix
+cd ~/perso/nvim-nix
 nix profile install .
 ```
 
@@ -36,10 +42,11 @@ external tools. To install only Neovim with its plugins:
 nix profile install .#nvim
 ```
 
-To try it without installing:
+To install or try it without cloning:
 
 ```sh
-nix run .#nvim
+nix profile install git+ssh://git@github.com/ndoucet/nvim-nix
+nix run git+ssh://git@github.com/ndoucet/nvim-nix#nvim
 ```
 
 ### Verify
@@ -73,12 +80,22 @@ Both applications work with their built-in defaults. Optional configuration file
 - `~/.config/alacritty/alacritty.toml`: terminal settings and JetBrainsMono Nerd Font
 - `~/.config/nvim/init.lua`: Neovim options, keybindings and plugin setup
 
-This repository ships templates for both. To use them, link them into place:
+This repository ships both. To use them, link them into place from the clone, so edits
+in the repository apply immediately:
 
 ```sh
 mkdir -p ~/.config/alacritty ~/.config/nvim
 ln -s "$PWD/alacritty.toml" ~/.config/alacritty/alacritty.toml
 ln -s "$PWD/init.lua"       ~/.config/nvim/init.lua
+```
+
+If `~/.config/nvim` already holds another configuration (LazyVim, …), move it away first,
+together with its data, or its plugins will conflict (bash/zsh syntax):
+
+```sh
+for d in ~/.config/nvim ~/.local/share/nvim ~/.local/state/nvim ~/.cache/nvim; do
+  [ -e "$d" ] && mv "$d" "$d.bak"
+done
 ```
 
 ## Adding software: internal plugins vs external packages
@@ -176,6 +193,14 @@ After editing `flake.nix`, or to update nixpkgs:
 
 ```sh
 nix flake update          # optional: update nixpkgs to the latest revision
+nix profile upgrade --all
+```
+
+Nix only sees files tracked by git: `git add` any new file before building. To share a
+change with other machines, commit and push it, then on each machine:
+
+```sh
+git pull
 nix profile upgrade --all
 ```
 
