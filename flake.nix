@@ -17,6 +17,8 @@
             plenary-nvim
             telescope-nvim
             nvim-treesitter.withAllGrammars
+            which-key-nvim
+            mini-icons
           ];
 
           # Neovim wrapped with the plugins above. wrapRc = false keeps

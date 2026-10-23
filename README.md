@@ -140,7 +140,7 @@ in `~/.config/nvim/init.lua`:
 require("lualine").setup({})
 ```
 
-The repository's `init.lua` already sets up telescope and treesitter.
+The repository's `init.lua` already sets up telescope, treesitter and which-key.
 
 Plugins installed this way exist only inside the `nvim` from this flake. They are
 not available to another Neovim installed elsewhere on the system.
