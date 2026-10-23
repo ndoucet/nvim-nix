@@ -117,6 +117,7 @@ ln -s "$PWD/nvim" ~/.config/nvim
 | `lua/config/options.lua` | General options: diagnostics display, completion menu |
 | `lua/config/keymaps.lua` | Keymaps not tied to a plugin: UI toggles, buffers, line diagnostics, quit |
 | `lua/plugins/ui.lua` | which-key and its leader groups, mini.icons |
+| `lua/plugins/neo-tree.lua` | File explorer sidebar and its `<Space>e` keys |
 | `lua/plugins/telescope.lua` | Fuzzy finder and its `<Space>f…` keys |
 | `lua/plugins/treesitter.lua` | Highlighting, folding, indentation |
 | `lua/plugins/git.lua` | Lazygit and the git pickers (`<Space>g…`) |

@@ -22,6 +22,7 @@
             nvim-lspconfig
             conform-nvim
             nvim-lint
+            neo-tree-nvim
             render-markdown-nvim
             # Its bundled Mermaid (10.2.3) fails on generics with several
             # parameters (Result~A, B~); serve the one from mermaid-cli instead.
