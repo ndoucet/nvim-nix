@@ -22,6 +22,8 @@
             nvim-lspconfig
             conform-nvim
             nvim-lint
+            render-markdown-nvim
+            markdown-preview-nvim
           ];
 
           # Language tools: added to Neovim's PATH only, not to the profile.
