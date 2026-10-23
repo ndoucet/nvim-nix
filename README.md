@@ -10,7 +10,7 @@ external packages, what each is for, and how to use it.
 
 ### Requirements
 
-- Linux on `x86_64` or `aarch64` (any distribution, NixOS, or WSL2) with the Nix package manager installed
+- Linux on `x86_64` or `aarch64` (any distribution, NixOS, or WSL2) with the Nix package manager installed (see [Installing Nix](#installing-nix))
 - Flakes enabled (`nix-command` and `flakes`)
 
 If flakes are not enabled globally, either add this line to `~/.config/nix/nix.conf`:
@@ -20,6 +20,102 @@ experimental-features = nix-command flakes
 ```
 
 or prefix every command below with `nix --extra-experimental-features "nix-command flakes"`.
+
+### Installing Nix
+
+Check first whether Nix is already there: `nix --version`. If it prints a version, skip
+to [Install](#install); on a shared machine with a multi-user install, any user can use it
+without `sudo`. Otherwise:
+
+| Situation | Method |
+|---|---|
+| You have `sudo` | [Official installer](#with-sudo-official-installer), Nix in `/nix` |
+| No `sudo`, but an administrator can create `/nix` once | [Single-user install](#no-sudo-an-administrator-creates-nix) |
+| No `sudo` at all | [nix-portable](#no-sudo-at-all-nix-portable), Nix in a folder you choose |
+
+#### With sudo: official installer
+
+```sh
+curl --proto '=https' --tlsv1.2 -sSfL https://nixos.org/nix/install | sh -s -- --daemon
+```
+
+This installs Nix in `/nix`, with a daemon that builds for every user. Open a new
+terminal afterwards. The daemon needs systemd: on WSL2, enable it first (add
+`[boot]` and `systemd=true` to `/etc/wsl.conf`, then `wsl --shutdown` from Windows),
+or use `--no-daemon` instead of `--daemon` for a single-user install.
+
+#### No sudo, an administrator creates /nix
+
+Ask an administrator to run, once:
+
+```sh
+sudo mkdir /nix && sudo chown <your-user> /nix
+```
+
+then install as yourself, without `sudo`:
+
+```sh
+curl --proto '=https' --tlsv1.2 -sSfL https://nixos.org/nix/install | sh -s -- --no-daemon
+```
+
+Open a new terminal afterwards. Everything else works as described in this README.
+
+#### No sudo at all: nix-portable
+
+[nix-portable](https://github.com/DavHau/nix-portable) is a single executable that runs Nix
+without root: it keeps the Nix store in a folder you choose and makes it appear as
+`/nix/store` to the programs it starts. Flakes are enabled by default. Choose the folder,
+here `$NIX_DIR` (Neovim with its tools takes about 8 GB, so not a small home quota), then:
+
+```sh
+NIX_DIR=/path/you/chose
+mkdir -p "$NIX_DIR/bin"
+curl -L https://github.com/DavHau/nix-portable/releases/latest/download/nix-portable-$(uname -m) \
+  -o "$NIX_DIR/bin/nix-portable"
+chmod +x "$NIX_DIR/bin/nix-portable"
+```
+
+Then tell nix-portable where to keep its store (in `$NIX_DIR/.nix-portable`) and put it on
+the `PATH`, in your shell's startup file, with the same path:
+
+```sh
+# bash/zsh: ~/.bashrc or ~/.zshrc
+export NP_LOCATION=/path/you/chose
+export PATH="$NP_LOCATION/bin:$PATH"
+```
+
+```fish
+# fish: ~/.config/fish/config.fish
+set -gx NP_LOCATION /path/you/chose
+fish_add_path $NP_LOCATION/bin
+```
+
+Check it in a new terminal with `nix-portable nix --version`.
+
+Programs from nix-portable only run through it, since `/nix/store` exists only inside it,
+and `nix profile` is not supported. So instead of [Install](#install), clone the
+repository and run Neovim from the clone:
+
+```sh
+git clone git@github.com:ndoucet/nvim-nix.git ~/perso/nvim-nix
+nix-portable nix run ~/perso/nvim-nix#nvim             # Neovim only
+nix-portable nix shell ~/perso/nvim-nix                # a shell with Neovim and all tools
+```
+
+To type `nvim` as usual, add a small launcher to the `PATH`:
+
+```sh
+cat > "$NP_LOCATION/bin/nvim" <<'EOF'
+#!/bin/sh
+exec nix-portable nix run "$HOME/perso/nvim-nix#nvim" -- "$@"
+EOF
+chmod +x "$NP_LOCATION/bin/nvim"
+```
+
+It always runs the clone as it is now, so there is no upgrade step: `git pull` is enough.
+The price is a few seconds at each start, while Nix checks the flake.
+If the system does not allow unprivileged user namespaces, nix-portable falls back to
+`proot`, which works but is noticeably slower.
 
 ### Install
 
