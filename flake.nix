@@ -23,7 +23,14 @@
             conform-nvim
             nvim-lint
             render-markdown-nvim
-            markdown-preview-nvim
+            # Its bundled Mermaid (10.2.3) fails on generics with several
+            # parameters (Result~A, B~); serve the one from mermaid-cli instead.
+            (markdown-preview-nvim.overrideAttrs (old: {
+              postInstall = (old.postInstall or "") + ''
+                cp ${pkgs.mermaid-cli}/lib/node_modules/@mermaid-js/mermaid-cli/node_modules/mermaid/dist/mermaid.min.js \
+                  $out/app/_static/mermaid.min.js
+              '';
+            }))
           ];
 
           # Language tools: added to Neovim's PATH only, not to the profile.

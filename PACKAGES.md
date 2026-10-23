@@ -18,7 +18,7 @@ Bundled into the `nvim` from this flake and loaded at startup. Configured in `nv
 | `conform-nvim` | Runs the formatter for each file type, on save and with `<Space>cf`; uses the language server when there is no formatter | `<Space>uf` toggles format on save · `:ConformInfo` shows which formatter applies |
 | `nvim-lint` | Runs linters for file types without a language server (Markdown), when a file is opened, saved, or when leaving insert mode | Warnings appear like language server diagnostics: `<Space>cd`, `]d`/`[d` |
 | `render-markdown-nvim` | Renders Markdown inside the buffer: headings, bullets, checkboxes, tables, code blocks, quotes. The line under the cursor stays raw for editing | Automatic in Markdown files · `<Space>um` toggles rendering |
-| `markdown-preview-nvim` | Live preview of the current Markdown file in the browser, scrolling with the cursor; renders Mermaid diagrams (` ```mermaid ` blocks), math and tables. On WSL it opens in the Windows default browser | `<Space>cp` in a Markdown file toggles the preview · `:MarkdownPreview` / `:MarkdownPreviewStop` · the URL is also printed, to open it by hand |
+| `markdown-preview-nvim` | Live preview of the current Markdown file in the browser, scrolling with the cursor; renders Mermaid diagrams (` ```mermaid ` blocks, with the Mermaid of `mermaid-cli`: the bundled one is too old), math and tables. On WSL it opens in the Windows default browser | `<Space>cp` in a Markdown file toggles the preview · `:MarkdownPreview` / `:MarkdownPreviewStop` · the URL is also printed, to open it by hand |
 
 ## Language tools (`languageServers`, `formatters`)
 
