@@ -71,23 +71,17 @@ launch:
 - **WSL2:** Alacritty connects to the WSLg display and renders on the GPU through
   the `d3d12` driver.
 
-Neovim and the external command-line tools need no special handling.
+Neovim, its language tools and the external command-line tools need no special handling.
 
 ## Configuration
 
-Both applications work with their built-in defaults. Optional configuration files:
+Both applications work with their built-in defaults. Optional configuration:
 
 - `~/.config/alacritty/alacritty.toml`: terminal settings and JetBrainsMono Nerd Font
-- `~/.config/nvim/init.lua`: Neovim options, keybindings and plugin setup
+- `~/.config/nvim/`: Neovim options, keybindings and plugin setup
 
-This repository ships both. To use them, link them into place from the clone, so edits
-in the repository apply immediately:
-
-```sh
-mkdir -p ~/.config/alacritty ~/.config/nvim
-ln -s "$PWD/alacritty.toml" ~/.config/alacritty/alacritty.toml
-ln -s "$PWD/init.lua"       ~/.config/nvim/init.lua
-```
+This repository ships both (`alacritty.toml` and the `nvim/` folder). To use them, link
+them into place from the clone, so edits in the repository apply immediately.
 
 If `~/.config/nvim` already holds another configuration (LazyVim, …), move it away first,
 together with its data, or its plugins will conflict (bash/zsh syntax):
@@ -98,9 +92,49 @@ for d in ~/.config/nvim ~/.local/share/nvim ~/.local/state/nvim ~/.cache/nvim; d
 done
 ```
 
+Then link:
+
+```sh
+mkdir -p ~/.config/alacritty
+ln -s "$PWD/alacritty.toml" ~/.config/alacritty/alacritty.toml
+ln -s "$PWD/nvim"           ~/.config/nvim
+```
+
+On a machine set up before the configuration was split into the `nvim/` folder,
+`~/.config/nvim` is a folder holding only a link to `init.lua`; replace it:
+
+```sh
+rm ~/.config/nvim/init.lua && rmdir ~/.config/nvim
+ln -s "$PWD/nvim" ~/.config/nvim
+```
+
+### Layout of the Neovim configuration
+
+`nvim/init.lua` only sets the leader key and loads one file per topic, in this order:
+
+| File | Contents |
+|---|---|
+| `lua/config/options.lua` | General options: diagnostics display, completion menu |
+| `lua/config/keymaps.lua` | Keymaps not tied to a plugin: UI toggles, buffers, line diagnostics, quit |
+| `lua/plugins/ui.lua` | which-key and its leader groups, mini.icons |
+| `lua/plugins/telescope.lua` | Fuzzy finder and its `<Space>f…` keys |
+| `lua/plugins/treesitter.lua` | Highlighting, folding, indentation |
+| `lua/plugins/git.lua` | Lazygit and the git pickers (`<Space>g…`) |
+| `lua/plugins/lsp.lua` | Language servers, completion, `gd`/`gr`/… and `<Space>c…` LSP keys |
+| `lua/plugins/format.lua` | conform: formatter per file type, format on save |
+| `lua/plugins/lint.lua` | nvim-lint: linter per file type |
+
+Each plugin's keymaps live in its file. A new plugin gets a new file in `lua/plugins/`
+and a `require("plugins.<name>")` line in `init.lua`. A new leader group also needs an
+entry in `ui.lua`.
+
 ## Adding software: internal plugins vs external packages
 
-All software is declared in `flake.nix`, in one of two lists.
+All software is declared in `flake.nix`, in one of two lists. Language servers and
+formatters have their own lists, `languageServers` and `formatters`, added to Neovim's
+`PATH` only (see [PACKAGES.md](PACKAGES.md#language-tools-languageservers-formatters));
+a new one also needs a line in `nvim/lua/plugins/lsp.lua` (`vim.lsp.enable`),
+`format.lua` (`formatters_by_ft`) or `lint.lua` (`linters_by_ft`).
 
 | | Internal (Neovim plugins) | External (packages) |
 |---|---|---|
@@ -134,13 +168,14 @@ Then rebuild and upgrade (see [Update](#update)), and add it to [PACKAGES.md](PA
 
 **Use.** Plugins are on Neovim's `packpath` and load automatically at startup.
 Do not install them again with a plugin manager (lazy.nvim, packer, …). Configure them
-in `~/.config/nvim/init.lua`:
+in a new file, for example `nvim/lua/plugins/lualine.lua`:
 
 ```lua
 require("lualine").setup({})
 ```
 
-The repository's `init.lua` already sets up telescope, treesitter and which-key.
+and load it from `nvim/init.lua` with `require("plugins.lualine")` (see
+[Layout of the Neovim configuration](#layout-of-the-neovim-configuration)).
 
 Plugins installed this way exist only inside the `nvim` from this flake. They are
 not available to another Neovim installed elsewhere on the system.

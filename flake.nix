@@ -19,13 +19,43 @@
             nvim-treesitter.withAllGrammars
             which-key-nvim
             mini-icons
+            nvim-lspconfig
+            conform-nvim
+            nvim-lint
           ];
 
+          # Language tools: added to Neovim's PATH only, not to the profile.
+          # Language servers come first, so a rustup proxy without the
+          # rust-analyzer component cannot shadow the one from Nix.
+          languageServers = [
+            clangd             # C/C++, runs clang-tidy
+            pkgs.pyright       # Python types
+            pkgs.rust-analyzer # Rust, runs clippy
+          ];
+          # Formatters and linters come last, so a version pinned by a
+          # project, a virtualenv or rustup takes precedence.
+          formatters = [
+            pkgs.clang-tools   # clang-format, clang-tidy
+            pkgs.ruff          # Python lint and format (also a language server)
+            pkgs.rustfmt
+            pkgs.prettier          # Markdown format
+            pkgs.markdownlint-cli2 # Markdown lint
+          ];
+          # clangd alone, without clang-format from the same package
+          clangd = pkgs.runCommand "clangd" { } ''
+            mkdir -p $out/bin
+            ln -s ${pkgs.clang-tools}/bin/clangd $out/bin/clangd
+          '';
+
           # Neovim wrapped with the plugins above. wrapRc = false keeps
-          # ~/.config/nvim/init.lua as the user configuration.
+          # ~/.config/nvim (linked to nvim/) as the user configuration.
           nvim = pkgs.wrapNeovimUnstable pkgs.neovim-unwrapped {
             plugins = nvimPlugins;
             wrapRc = false;
+            wrapperArgs = [
+              "--prefix" "PATH" ":" (pkgs.lib.makeBinPath languageServers)
+              "--suffix" "PATH" ":" (pkgs.lib.makeBinPath formatters)
+            ];
           };
 
           font = pkgs.nerd-fonts.jetbrains-mono;
