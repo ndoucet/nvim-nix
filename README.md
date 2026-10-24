@@ -371,9 +371,96 @@ that the flake still builds.
 
 ## Uninstall
 
+Each step is independent: do only those you need, in this order.
+
+### 1. Remove the package
+
+Find the entry name, then remove it: `nvim-nix` for the `default` package, `nvim` if you
+installed `.#nvim`.
+
 ```sh
 nix profile list
-nix profile remove <name-or-index>
+nix profile remove nvim-nix
 ```
 
-Uninstalling does not delete personal configuration files under `~/.config`.
+The programs (`nvim`, `alacritty`, `lazygit`, …) are no longer on the `PATH` in new
+terminals.
+
+### 2. Free the disk space
+
+Removing the package does not delete it from `/nix/store`: older profile versions still
+point to it, so you can roll back. To delete it for good:
+
+```sh
+nix profile wipe-history    # forget older profile versions: no rollback after this
+nix store gc                # delete everything nothing points to any more
+```
+
+`nix store gc --dry-run` lists what would be deleted first.
+
+### 3. Remove the configuration links
+
+[Configuration](#configuration) linked the configuration into `~/.config`. Remove the links
+(this leaves the files in the clone untouched; no trailing `/` on `~/.config/nvim`, or `rm`
+looks inside the link instead of removing it):
+
+```sh
+rm ~/.config/nvim ~/.config/alacritty/alacritty.toml
+```
+
+Neovim also keeps history, undo and swap files in `~/.local/share/nvim`,
+`~/.local/state/nvim` and `~/.cache/nvim`. Delete them too for a clean slate:
+
+```sh
+rm -rf ~/.local/share/nvim ~/.local/state/nvim ~/.cache/nvim
+```
+
+### 4. Restore a previous Neovim configuration
+
+If you moved another configuration away during [Configuration](#configuration) (to
+`*.bak`), first do step 3, then move it back:
+
+```sh
+# bash/zsh
+for d in ~/.config/nvim ~/.local/share/nvim ~/.local/state/nvim ~/.cache/nvim; do
+  [ -e "$d.bak" ] && mv "$d.bak" "$d"
+done
+```
+
+```fish
+# fish
+for d in ~/.config/nvim ~/.local/share/nvim ~/.local/state/nvim ~/.cache/nvim
+  test -e $d.bak; and mv $d.bak $d
+end
+```
+
+### 5. Remove nix-portable
+
+If you used [nix-portable](#no-sudo-at-all-nix-portable) instead of steps 1 and 2:
+
+1. Delete the folder, with the store and the `nvim` launcher. The store is read-only, so
+   make it writable first:
+
+   ```sh
+   chmod -R u+w $NP_LOCATION
+   rm -rf $NP_LOCATION
+   ```
+
+2. Delete the lines setting `NP_LOCATION` and `PATH` from `~/.bashrc`, `~/.zshrc` or
+   `~/.config/fish/config.fish`, and open a new terminal.
+3. Delete Nix's cache: `rm -rf ~/.cache/nix`.
+
+### 6. Remove the clone
+
+```sh
+rm -rf ~/perso/nvim-nix
+```
+
+Do this last: the links of step 3 point into it, and with nix-portable, Neovim runs from it.
+Push any change you want to keep first.
+
+### 7. Uninstall Nix itself
+
+Only if nothing else on the machine uses Nix. Removing Nix depends on how it was installed
+(multi-user with a daemon, or single-user): follow the
+[official uninstall instructions](https://nix.dev/manual/nix/latest/installation/uninstall.html).
