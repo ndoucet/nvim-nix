@@ -64,52 +64,81 @@ Open a new terminal afterwards. Everything else works as described in this READM
 
 [nix-portable](https://github.com/DavHau/nix-portable) is a single executable that runs Nix
 without root: it keeps the Nix store in a folder you choose and makes it appear as
-`/nix/store` to the programs it starts. Flakes are enabled by default. Choose the folder,
-here `$NIX_DIR` (Neovim with its tools takes about 8 GB, so not a small home quota), then:
+`/nix/store` to the programs it starts. Flakes are enabled by default.
+
+**1. Choose the folder.** Neovim with its tools takes about 8 GB, so pick a disk with room,
+not a small home quota. Below, `/data/me/nix` stands for that folder: replace it
+everywhere. The folder holds two things:
+
+- `/data/me/nix/bin/nix-portable`: the executable
+- `/data/me/nix/.nix-portable/`: the Nix store, created on first run
+
+Create the `bin` folder now:
 
 ```sh
-NIX_DIR=/path/you/chose
-mkdir -p "$NIX_DIR/bin"
-curl -L https://github.com/DavHau/nix-portable/releases/latest/download/nix-portable-$(uname -m) \
-  -o "$NIX_DIR/bin/nix-portable"
-chmod +x "$NIX_DIR/bin/nix-portable"
+mkdir -p /data/me/nix/bin
 ```
 
-Then tell nix-portable where to keep its store (in `$NIX_DIR/.nix-portable`) and put it on
-the `PATH`, in your shell's startup file, with the same path:
+**2. Set `NP_LOCATION` and `PATH` in your shell's startup file**, before the first run.
+`NP_LOCATION` tells nix-portable where to create `.nix-portable`; without it, it uses your
+home folder.
 
 ```sh
-# bash/zsh: ~/.bashrc or ~/.zshrc
-export NP_LOCATION=/path/you/chose
+# bash/zsh: add to ~/.bashrc or ~/.zshrc
+export NP_LOCATION=/data/me/nix
 export PATH="$NP_LOCATION/bin:$PATH"
 ```
 
 ```fish
-# fish: ~/.config/fish/config.fish
-set -gx NP_LOCATION /path/you/chose
-fish_add_path $NP_LOCATION/bin
+# fish: add to ~/.config/fish/config.fish
+set -gx NP_LOCATION /data/me/nix
+set -gx PATH $NP_LOCATION/bin $PATH
 ```
 
-Check it in a new terminal with `nix-portable nix --version`.
+Then open a new terminal, so both are set, and check:
 
-Programs from nix-portable only run through it, since `/nix/store` exists only inside it,
-and `nix profile` is not supported. So instead of [Install](#install), clone the
-repository and run Neovim from the clone:
+```sh
+echo $NP_LOCATION     # prints /data/me/nix
+echo $PATH            # starts with /data/me/nix/bin
+```
+
+**3. Download nix-portable** into `$NP_LOCATION/bin` (these commands work in bash, zsh and
+fish):
+
+```sh
+curl -L -o $NP_LOCATION/bin/nix-portable https://github.com/DavHau/nix-portable/releases/latest/download/nix-portable-$(uname -m)
+chmod +x $NP_LOCATION/bin/nix-portable
+```
+
+**4. Check it:**
+
+```sh
+command -v nix-portable    # prints /data/me/nix/bin/nix-portable
+nix-portable nix --version
+```
+
+The first run creates `$NP_LOCATION/.nix-portable`. If it was created in your home folder
+instead, `NP_LOCATION` was not set: delete `~/.nix-portable` and go back to step 2.
+
+**5. Run Neovim.** Programs from nix-portable only run through it, since `/nix/store` exists
+only inside it, and `nix profile` is not supported. So instead of [Install](#install),
+clone the repository and run it from the clone:
 
 ```sh
 git clone git@github.com:ndoucet/nvim-nix.git ~/perso/nvim-nix
-nix-portable nix run ~/perso/nvim-nix#nvim             # Neovim only
-nix-portable nix shell ~/perso/nvim-nix                # a shell with Neovim and all tools
+nix-portable nix shell ~/perso/nvim-nix -c nvim    # Neovim with all external tools
+nix-portable nix shell ~/perso/nvim-nix            # a shell with Neovim and all tools
 ```
 
-To type `nvim` as usual, add a small launcher to the `PATH`:
+Use `nix shell`, not `nix run ~/perso/nvim-nix#nvim`: `#nvim` leaves out the external
+tools (`rg`, `fd`, `lazygit`…), which telescope and `<Space>gg` need.
+
+To type `nvim` as usual, add a launcher next to `nix-portable` (it is on the `PATH` since
+step 2):
 
 ```sh
-cat > "$NP_LOCATION/bin/nvim" <<'EOF'
-#!/bin/sh
-exec nix-portable nix run "$HOME/perso/nvim-nix#nvim" -- "$@"
-EOF
-chmod +x "$NP_LOCATION/bin/nvim"
+printf '#!/bin/sh\nexec nix-portable nix shell "$HOME/perso/nvim-nix" -c nvim "$@"\n' > $NP_LOCATION/bin/nvim
+chmod +x $NP_LOCATION/bin/nvim
 ```
 
 It always runs the clone as it is now, so there is no upgrade step: `git pull` is enough.
